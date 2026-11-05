@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Máquina de Turing</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <header>
+    <h1>Máquina de Turing</h1>
+    <p>L = { a²ⁿ b²ⁿ cⁿ | n ≥ 0 }. Os a vêm antes dos b, e os b antes dos c.</p>
+  </header>
+  <section class="controles">
+    <label for="entrada">Palavra</label>
+    <input id="entrada" type="text" value="" spellcheck="false" autocomplete="off">
+    <button id="carregar" type="button">Carregar</button>
+    <button id="passo" type="button">Um passo</button>
+    <button id="executar" type="button">Executar</button>
+    <button id="parar" type="button">Parar</button>
+  </section>
+  <section id="secao-fita">
+    <h2>Fita</h2>
+    <div id="fita"></div>
+  </section>
+
+  <section>
+    <h2>Tabela δ</h2>
+    <div id="tabela"></div>
+  </section>
+
+  <section>
+    <h2>Histórico</h2>
+    <ol id="historico"></ol>
+  </section>
+
+  <script src="machine.js"></script>
+</body>
+
+</html>
