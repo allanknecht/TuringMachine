@@ -1,7 +1,7 @@
 const symbols = ["•", "a", "b", "c", "X", "C", "β"];
 const states = ["q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7"];
 
-const table = {
+const delta = {
   q0: {
     "•": ["q0", "•", "D"],
     a: ["q1", "X", "D"],
@@ -41,29 +41,17 @@ const table = {
   q7: {},
 };
 
-let execution = null;
+let machine = null;
 let timer = null;
 
 function transition(state, symbol) {
-  const row = table[state];
-  if (!row || !Object.prototype.hasOwnProperty.call(row, symbol)) return null;
+  const row = delta[state];
+  if (!row || !Object.hasOwn(row, symbol)) return null;
   return row[symbol];
 }
 
 function ruleText(state, symbol, rule) {
-  return (
-    "(" +
-    state +
-    ", " +
-    symbol +
-    ") → (" +
-    rule[0] +
-    ", " +
-    rule[1] +
-    ", " +
-    rule[2] +
-    ")"
-  );
+  return "(" + state + ", " + symbol + ") → (" + rule[0] + ", " + rule[1] + ", " + rule[2] + ")";
 }
 
 function haltText(result, steps) {
@@ -74,7 +62,6 @@ function haltText(result, steps) {
 
 function setup(word) {
   return {
-    word: word,
     tape: ["•", ...word.split(""), "β"],
     head: 0,
     state: "q0",
@@ -84,17 +71,25 @@ function setup(word) {
   };
 }
 
+function halt(result) {
+  machine.result = result;
+  machine.history.push({
+    result: result,
+    text: haltText(result, machine.steps),
+  });
+}
+
 function drawTape() {
   const tape = document.getElementById("tape");
   tape.innerHTML = "";
-  if (!execution) return;
-  execution.tape.forEach(function (symbol, index) {
+  if (!machine) return;
+  machine.tape.forEach(function (symbol, index) {
     const cell = document.createElement("div");
     cell.className = "cell";
     cell.textContent = symbol;
-    if (index === execution.head) {
+    if (index === machine.head) {
       cell.classList.add("head");
-      cell.dataset.state = execution.state;
+      cell.dataset.state = machine.state;
     }
     tape.appendChild(cell);
   });
@@ -106,8 +101,8 @@ function drawTable() {
   const header = document.createElement("tr");
   header.appendChild(document.createElement("th"));
 
-  const readSymbol = execution ? execution.tape[execution.head] : null;
-  const showCell = execution && execution.result !== "accept";
+  const readSymbol = machine ? machine.tape[machine.head] : null;
+  const showCell = machine && machine.result !== "accept";
 
   symbols.forEach(function (symbol) {
     const th = document.createElement("th");
@@ -123,15 +118,14 @@ function drawTable() {
     if (state === "q0") name.textContent = "→q0";
     else if (state === "q7") name.textContent = "q7*";
     else name.textContent = state;
-    if (showCell && state === execution.state) name.classList.add("active");
+    if (showCell && state === machine.state) name.classList.add("active");
     row.appendChild(name);
 
     symbols.forEach(function (symbol) {
       const td = document.createElement("td");
       const rule = transition(state, symbol);
       td.textContent = rule ? "(" + rule.join(", ") + ")" : "—";
-      const isCurrent =
-        showCell && state === execution.state && symbol === readSymbol;
+      const isCurrent = showCell && state === machine.state && symbol === readSymbol;
       if (isCurrent) {
         td.classList.add("rule");
         if (!rule) td.classList.add("empty");
@@ -150,8 +144,8 @@ function drawTable() {
 function drawHistory() {
   const list = document.getElementById("history");
   list.innerHTML = "";
-  if (!execution) return;
-  execution.history.forEach(function (item) {
+  if (!machine) return;
+  machine.history.forEach(function (item) {
     const li = document.createElement("li");
     if (item.result) {
       li.textContent = item.text;
@@ -164,61 +158,50 @@ function drawHistory() {
   list.scrollTop = list.scrollHeight;
 }
 
-function step() {
-  if (!execution || execution.result) return;
-  const symbol = execution.tape[execution.head];
-  const rule = transition(execution.state, symbol);
-  if (!rule) {
-    execution.result = "reject";
-    execution.history.push({
-      result: "reject",
-      text: haltText("reject", execution.steps),
-    });
-    drawTable();
-    drawHistory();
-    return;
-  }
-  const newState = rule[0];
-  const write = rule[1];
-  const direction = rule[2];
-  if (direction === "E" && execution.head === 0) {
-    execution.result = "reject";
-    execution.history.push({
-      result: "reject",
-      text: haltText("reject", execution.steps),
-    });
-    drawTable();
-    drawHistory();
-    return;
-  }
-  execution.tape[execution.head] = write;
-  execution.head += direction === "D" ? 1 : -1;
-  if (execution.head === execution.tape.length) execution.tape.push("β");
-  const sourceState = execution.state;
-  execution.state = newState;
-  execution.steps += 1;
-  execution.history.push({
-    state: sourceState,
-    symbol: symbol,
-    rule: rule,
-  });
-  if (newState === "q7") {
-    execution.result = "accept";
-    execution.history.push({
-      result: "accept",
-      text: haltText("accept", execution.steps),
-    });
-  }
+function draw() {
   drawTape();
   drawTable();
   drawHistory();
+}
+
+function step() {
+  if (!machine || machine.result) return;
+
+  const symbol = machine.tape[machine.head];
+  const rule = transition(machine.state, symbol);
+  if (!rule) {
+    halt("reject");
+    draw();
+    return;
+  }
+
+  const [newState, write, direction] = rule;
+  if (direction === "E" && machine.head === 0) {
+    halt("reject");
+    draw();
+    return;
+  }
+
+  machine.tape[machine.head] = write;
+  machine.head += direction === "D" ? 1 : -1;
+  if (machine.head === machine.tape.length) machine.tape.push("β");
+  machine.history.push({
+    state: machine.state,
+    symbol: symbol,
+    rule: rule,
+  });
+  machine.state = newState;
+  machine.steps += 1;
+
+  if (newState === "q7") halt("accept");
+  draw();
 }
 
 function run() {
   document.getElementById("run").disabled = true;
   timer = setInterval(function () {
     step();
-    if (!execution || execution.result) stop();
+    if (!machine || machine.result) stop();
   }, 400);
 }
 
@@ -232,20 +215,16 @@ function load() {
   stop();
   const word = document.getElementById("word").value.replace(/\s+/g, "");
   if (!/^[abc]*$/.test(word)) {
-    execution = null;
-    drawTape();
-    drawTable();
-    drawHistory();
+    machine = null;
+    draw();
     const notice = document.createElement("li");
     notice.textContent = "A entrada usa somente a, b e c.";
     document.getElementById("history").appendChild(notice);
     document.getElementById("load").textContent = "Carregar";
     return;
   }
-  execution = setup(word);
-  drawTape();
-  drawTable();
-  drawHistory();
+  machine = setup(word);
+  draw();
   document.getElementById("load").textContent = "Reiniciar";
 }
 
