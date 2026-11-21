@@ -12,27 +12,27 @@
     <h1>Máquina de Turing</h1>
     <p>L = { a²ⁿ b²ⁿ cⁿ | n ≥ 0 }. Os a vêm antes dos b, e os b antes dos c.</p>
   </header>
-  <section class="controles">
-    <label for="entrada">Palavra</label>
-    <input id="entrada" type="text" value="" spellcheck="false" autocomplete="off">
-    <button id="carregar" type="button">Carregar</button>
-    <button id="passo" type="button">Um passo</button>
-    <button id="executar" type="button">Executar</button>
-    <button id="parar" type="button">Parar</button>
+  <section class="controls">
+    <label for="word">Palavra</label>
+    <input id="word" type="text" value="" spellcheck="false" autocomplete="off">
+    <button id="load" type="button">Carregar</button>
+    <button id="step" type="button">Um passo</button>
+    <button id="run" type="button">Executar</button>
+    <button id="stop" type="button">Parar</button>
   </section>
-  <section id="secao-fita">
+  <section>
     <h2>Fita</h2>
-    <div id="fita"></div>
+    <div id="tape"></div>
   </section>
 
   <section>
     <h2>Tabela δ</h2>
-    <div id="tabela"></div>
+    <div id="table"></div>
   </section>
 
   <section>
     <h2>Histórico</h2>
-    <ol id="historico"></ol>
+    <ol id="history"></ol>
   </section>
 
   <script src="machine.js"></script>

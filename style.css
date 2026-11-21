@@ -47,14 +47,14 @@ section {
   border-radius: 16px;
 }
 
-.controles {
+.controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
 
-.controles label {
+.controls label {
   font-size: 0.9rem;
   font-weight: 600;
   color: #4b5563;
@@ -70,7 +70,7 @@ input {
   color: inherit;
 }
 
-#entrada {
+#word {
   width: 16rem;
   font-family: ui-monospace, Consolas, monospace;
   background: #f9fafb;
@@ -92,7 +92,7 @@ button:disabled {
   cursor: default;
 }
 
-#fita {
+#tape {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
@@ -100,7 +100,7 @@ button:disabled {
   padding-top: 1.5rem;
 }
 
-.celula {
+.cell {
   position: relative;
   width: 52px;
   height: 52px;
@@ -114,14 +114,14 @@ button:disabled {
   background: #fff;
 }
 
-.celula.cabeca {
+.cell.head {
   background: #dbeafe;
   border-color: #2563eb;
   border-width: 2px;
 }
 
-.celula.cabeca::after {
-  content: attr(data-estado);
+.cell.head::after {
+  content: attr(data-state);
   position: absolute;
   top: -18px;
   left: 0;
@@ -132,7 +132,7 @@ button:disabled {
   color: #2563eb;
 }
 
-#tabela {
+#table {
   overflow: visible;
 }
 
@@ -158,21 +158,21 @@ th {
   color: #4b5563;
 }
 
-th.ativa,
-td.coluna {
+th.active,
+td.column {
   background: #f3f4f6;
 }
 
-td.regra {
+td.rule {
   background: #fde68a;
   font-weight: 700;
 }
 
-td.vazia.regra {
+td.empty.rule {
   background: #fecaca;
 }
 
-#historico {
+#history {
   font-family: ui-monospace, Consolas, monospace;
   font-size: 14px;
   max-height: 16rem;
@@ -184,12 +184,12 @@ td.vazia.regra {
   background: #f9fafb;
 }
 
-#historico .aceita {
+#history .accept {
   color: #15803d;
   font-weight: 700;
 }
 
-#historico .rejeita {
+#history .reject {
   color: #b91c1c;
   font-weight: 700;
 }

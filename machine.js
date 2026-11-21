@@ -1,7 +1,7 @@
-const simbolos = ["•", "a", "b", "c", "X", "C", "β"];
-const estados = ["q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7"];
+const symbols = ["•", "a", "b", "c", "X", "C", "β"];
+const states = ["q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7"];
 
-const tabela = {
+const table = {
   q0: {
     "•": ["q0", "•", "D"],
     a: ["q1", "X", "D"],
@@ -41,217 +41,215 @@ const tabela = {
   q7: {},
 };
 
-let execucao = null;
-let relogio = null;
+let execution = null;
+let timer = null;
 
-function transicao(estado, simbolo) {
-  const linha = tabela[estado];
-  if (!linha || !Object.prototype.hasOwnProperty.call(linha, simbolo))
-    // existe esse estado (linha)? || existe esse simbolo?
-    return null;
-  return linha[simbolo];
+function transition(state, symbol) {
+  const row = table[state];
+  if (!row || !Object.prototype.hasOwnProperty.call(row, symbol)) return null;
+  return row[symbol];
 }
 
-function textoRegra(estado, simbolo, regra) {
+function ruleText(state, symbol, rule) {
   return (
     "(" +
-    estado +
+    state +
     ", " +
-    simbolo +
+    symbol +
     ") → (" +
-    regra[0] +
+    rule[0] +
     ", " +
-    regra[1] +
+    rule[1] +
     ", " +
-    regra[2] +
+    rule[2] +
     ")"
   );
 }
 
-function textoParada(resultado, passos) {
-  const conta = passos === 1 ? "1 passo" : passos + " passos";
-  if (resultado === "aceita") return "Aceito em " + conta;
-  return "Rejeitado em " + conta;
+function haltText(result, steps) {
+  const count = steps === 1 ? "1 passo" : steps + " passos";
+  if (result === "accept") return "Aceito em " + count;
+  return "Rejeitado em " + count;
 }
 
-function montar(palavra) {
+function setup(word) {
   return {
-    palavra: palavra,
-    fita: ["•", ...palavra.split(""), "β"],
-    cabeca: 0,
-    estado: "q0",
-    resultado: null,
-    historico: [],
-    passos: 0,
+    word: word,
+    tape: ["•", ...word.split(""), "β"],
+    head: 0,
+    state: "q0",
+    result: null,
+    history: [],
+    steps: 0,
   };
 }
 
-function desenharFita() {
-  const fita = document.getElementById("fita");
-  fita.innerHTML = "";
-  if (!execucao) return;
-  execucao.fita.forEach(function (simbolo, indice) {
-    const celula = document.createElement("div");
-    celula.className = "celula";
-    celula.textContent = simbolo;
-    if (indice === execucao.cabeca) {
-      celula.classList.add("cabeca");
-      celula.dataset.estado = execucao.estado;
+function drawTape() {
+  const tape = document.getElementById("tape");
+  tape.innerHTML = "";
+  if (!execution) return;
+  execution.tape.forEach(function (symbol, index) {
+    const cell = document.createElement("div");
+    cell.className = "cell";
+    cell.textContent = symbol;
+    if (index === execution.head) {
+      cell.classList.add("head");
+      cell.dataset.state = execution.state;
     }
-    fita.appendChild(celula);
+    tape.appendChild(cell);
   });
 }
 
-function desenharTabela() {
-  const destino = document.getElementById("tabela");
-  const grade = document.createElement("table");
-  const cabecalho = document.createElement("tr");
-  cabecalho.appendChild(document.createElement("th"));
+function drawTable() {
+  const target = document.getElementById("table");
+  const grid = document.createElement("table");
+  const header = document.createElement("tr");
+  header.appendChild(document.createElement("th"));
 
-  const simboloLido = execucao ? execucao.fita[execucao.cabeca] : null;
-  const mostrarCasa = execucao && execucao.resultado !== "aceita";
+  const readSymbol = execution ? execution.tape[execution.head] : null;
+  const showCell = execution && execution.result !== "accept";
 
-  simbolos.forEach(function (simbolo) {
+  symbols.forEach(function (symbol) {
     const th = document.createElement("th");
-    th.textContent = simbolo;
-    if (mostrarCasa && simbolo === simboloLido) th.classList.add("ativa");
-    cabecalho.appendChild(th);
+    th.textContent = symbol;
+    if (showCell && symbol === readSymbol) th.classList.add("active");
+    header.appendChild(th);
   });
-  grade.appendChild(cabecalho);
+  grid.appendChild(header);
 
-  estados.forEach(function (estado) {
-    const linha = document.createElement("tr");
-    const nome = document.createElement("th");
-    if (estado === "q0") nome.textContent = "→q0";
-    else if (estado === "q7") nome.textContent = "q7*";
-    else nome.textContent = estado;
-    if (mostrarCasa && estado === execucao.estado) nome.classList.add("ativa");
-    linha.appendChild(nome);
+  states.forEach(function (state) {
+    const row = document.createElement("tr");
+    const name = document.createElement("th");
+    if (state === "q0") name.textContent = "→q0";
+    else if (state === "q7") name.textContent = "q7*";
+    else name.textContent = state;
+    if (showCell && state === execution.state) name.classList.add("active");
+    row.appendChild(name);
 
-    simbolos.forEach(function (simbolo) {
+    symbols.forEach(function (symbol) {
       const td = document.createElement("td");
-      const regra = transicao(estado, simbolo);
-      td.textContent = regra ? "(" + regra.join(", ") + ")" : "—";
-      const ehAtual =
-        mostrarCasa && estado === execucao.estado && simbolo === simboloLido;
-      if (ehAtual) {
-        td.classList.add("regra");
-        if (!regra) td.classList.add("vazia");
-      } else if (mostrarCasa && simbolo === simboloLido) {
-        td.classList.add("coluna");
+      const rule = transition(state, symbol);
+      td.textContent = rule ? "(" + rule.join(", ") + ")" : "—";
+      const isCurrent =
+        showCell && state === execution.state && symbol === readSymbol;
+      if (isCurrent) {
+        td.classList.add("rule");
+        if (!rule) td.classList.add("empty");
+      } else if (showCell && symbol === readSymbol) {
+        td.classList.add("column");
       }
-      linha.appendChild(td);
+      row.appendChild(td);
     });
-    grade.appendChild(linha);
+    grid.appendChild(row);
   });
 
-  destino.innerHTML = "";
-  destino.appendChild(grade);
+  target.innerHTML = "";
+  target.appendChild(grid);
 }
 
-function desenharHistorico() {
-  const lista = document.getElementById("historico");
-  lista.innerHTML = "";
-  if (!execucao) return;
-  execucao.historico.forEach(function (item) {
+function drawHistory() {
+  const list = document.getElementById("history");
+  list.innerHTML = "";
+  if (!execution) return;
+  execution.history.forEach(function (item) {
     const li = document.createElement("li");
-    if (item.resultado) {
-      li.textContent = item.texto;
-      li.className = item.resultado;
+    if (item.result) {
+      li.textContent = item.text;
+      li.className = item.result;
     } else {
-      li.textContent = textoRegra(item.estado, item.simbolo, item.regra);
+      li.textContent = ruleText(item.state, item.symbol, item.rule);
     }
-    lista.appendChild(li);
+    list.appendChild(li);
   });
-  lista.scrollTop = lista.scrollHeight;
+  list.scrollTop = list.scrollHeight;
 }
 
-function passo() {
-  if (!execucao || execucao.resultado) return;
-  const simbolo = execucao.fita[execucao.cabeca];
-  const regra = transicao(execucao.estado, simbolo);
-  if (!regra) {
-    execucao.resultado = "rejeita";
-    execucao.historico.push({
-      resultado: "rejeita",
-      texto: textoParada("rejeita", execucao.passos),
+function step() {
+  if (!execution || execution.result) return;
+  const symbol = execution.tape[execution.head];
+  const rule = transition(execution.state, symbol);
+  if (!rule) {
+    execution.result = "reject";
+    execution.history.push({
+      result: "reject",
+      text: haltText("reject", execution.steps),
     });
-    desenharTabela();
-    desenharHistorico();
+    drawTable();
+    drawHistory();
     return;
   }
-  const novoEstado = regra[0];
-  const gravar = regra[1];
-  const direcao = regra[2];
-  if (direcao === "E" && execucao.cabeca === 0) {
-    execucao.resultado = "rejeita";
-    execucao.historico.push({
-      resultado: "rejeita",
-      texto: textoParada("rejeita", execucao.passos),
+  const newState = rule[0];
+  const write = rule[1];
+  const direction = rule[2];
+  if (direction === "E" && execution.head === 0) {
+    execution.result = "reject";
+    execution.history.push({
+      result: "reject",
+      text: haltText("reject", execution.steps),
     });
-    desenharTabela();
-    desenharHistorico();
+    drawTable();
+    drawHistory();
     return;
   }
-  execucao.fita[execucao.cabeca] = gravar;
-  execucao.cabeca += direcao === "D" ? 1 : -1;
-  if (execucao.cabeca === execucao.fita.length) execucao.fita.push("β"); // se a cabeça estiver na última casa, adiciona um β, a fita é infinita
-  const estadoDeOrigem = execucao.estado;
-  execucao.estado = novoEstado;
-  execucao.passos += 1;
-  execucao.historico.push({
-    estado: estadoDeOrigem,
-    simbolo: simbolo,
-    regra: regra,
+  execution.tape[execution.head] = write;
+  execution.head += direction === "D" ? 1 : -1;
+  if (execution.head === execution.tape.length) execution.tape.push("β");
+  const sourceState = execution.state;
+  execution.state = newState;
+  execution.steps += 1;
+  execution.history.push({
+    state: sourceState,
+    symbol: symbol,
+    rule: rule,
   });
-  if (novoEstado === "q7") {
-    execucao.resultado = "aceita";
-    execucao.historico.push({
-      resultado: "aceita",
-      texto: textoParada("aceita", execucao.passos),
+  if (newState === "q7") {
+    execution.result = "accept";
+    execution.history.push({
+      result: "accept",
+      text: haltText("accept", execution.steps),
     });
   }
-  desenharFita();
-  desenharTabela();
-  desenharHistorico();
+  drawTape();
+  drawTable();
+  drawHistory();
 }
 
-function executar() {
-  document.getElementById("executar").disabled = true;
-  relogio = setInterval(function () {
-    passo();
-    if (!execucao || execucao.resultado) parar();
+function run() {
+  document.getElementById("run").disabled = true;
+  timer = setInterval(function () {
+    step();
+    if (!execution || execution.result) stop();
   }, 400);
 }
 
-function parar() {
-  clearInterval(relogio);
-  relogio = null;
-  document.getElementById("executar").disabled = false;
+function stop() {
+  clearInterval(timer);
+  timer = null;
+  document.getElementById("run").disabled = false;
 }
 
-function carregar() {
-  parar();
-  const palavra = document.getElementById("entrada").value.replace(/\s+/g, "");
-  if (!/^[abc]*$/.test(palavra)) {
-    execucao = null;
-    desenharFita();
-    desenharTabela();
-    desenharHistorico();
-    const aviso = document.createElement("li");
-    aviso.textContent = "A entrada usa somente a, b e c.";
-    document.getElementById("historico").appendChild(aviso);
-    document.getElementById("carregar").textContent = "Carregar";
+function load() {
+  stop();
+  const word = document.getElementById("word").value.replace(/\s+/g, "");
+  if (!/^[abc]*$/.test(word)) {
+    execution = null;
+    drawTape();
+    drawTable();
+    drawHistory();
+    const notice = document.createElement("li");
+    notice.textContent = "A entrada usa somente a, b e c.";
+    document.getElementById("history").appendChild(notice);
+    document.getElementById("load").textContent = "Carregar";
     return;
   }
-  execucao = montar(palavra);
-  desenharFita();
-  desenharTabela();
-  desenharHistorico();
-  document.getElementById("carregar").textContent = "Reiniciar";
+  execution = setup(word);
+  drawTape();
+  drawTable();
+  drawHistory();
+  document.getElementById("load").textContent = "Reiniciar";
 }
 
-document.getElementById("carregar").addEventListener("click", carregar);
-document.getElementById("passo").addEventListener("click", passo);
-document.getElementById("executar").addEventListener("click", executar);
-document.getElementById("parar").addEventListener("click", parar);
+document.getElementById("load").addEventListener("click", load);
+document.getElementById("step").addEventListener("click", step);
+document.getElementById("run").addEventListener("click", run);
+document.getElementById("stop").addEventListener("click", stop);
